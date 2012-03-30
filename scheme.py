@@ -1,5 +1,33 @@
 import readline
 variables = {}
+bools = ["<", ">", "=", ">=", "<="]	
+define = {}
+user_def = []
+class function(object):
+	def __init__(self,name,var,expr):
+		self.name = name
+		self.var = var
+		self.expr = expr 
+	def execute(self,args):
+		if len(args) != len(self.var):
+			return
+		new = str(self.expr)	
+		for i in xrange(len(args)):
+			new = new.replace(self.var[i], args[i])	
+		return eval(new)
+		
+def find_var(x):
+	new = []
+	for i in x:
+		if type(i) != list and i not in "[]":
+			new += [i]
+	return new
+def find_expr(x):
+	new = []
+	for i in x:
+		if type(i) == list:
+			new += i
+	return new
 def add(args):
 	return reduce(lambda x, y: float(x) + float(y), args)
 
@@ -34,7 +62,7 @@ def setVar(var, val):
 	variables[var] = val
 	return
 op = {"+": add, "*": mult, "/": div, "=": boolean, ">": boolean, "<": boolean, "print": print_var, "-": sub}
-bools = ["<", ">", "=", ">=", "<="]	
+
 
 
 def parse(a):
@@ -50,28 +78,30 @@ def parse(a):
 			new += [parse(a[i:])]
 			return new
 		else: 
-			
 			new += [a[i]]
 	return new
 
 def evalu(expr):
+	new = ""
 	if type(expr) != list:
 		expr = parse(expr)
 	while "]" in expr: expr.remove("]")
 	while "[" in expr: expr.remove("[")
 	funct = expr[0]
-	var = None
-	if funct == "set!":
-			var = expr[1]
-			expr = expr[2:]
-			
+	if funct == "define":
+		define[expr[1]] = function(expr[1], find_var(expr[2]), find_expr(expr[2]))
+		user_def.append(expr[1])
+		return
+	if funct in user_def:
+		return evalu(define[funct].execute(expr[1:]))
 	for i in xrange(len(expr)):
 		if type(expr[i]) == list:
 			expr[i] = evalu(expr[i])
 	if funct in op:
 		if funct in bools:
 			new = op[funct](funct, expr[1:])
-		else: new = op[funct](expr[1:]) 
+		else:
+			new =  op[funct](expr[1:]) 
 	return new
 
 def repl():
@@ -82,4 +112,5 @@ def repl():
 				print evalu(a)
 			except: 
 				print "error"
+				
 repl()
